@@ -1,9 +1,12 @@
 import boto3
 import json
 import os
+import logging
 
 s3 = boto3.client('s3')
 sns = boto3.client('sns')
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     # get topic from environment variable
@@ -12,6 +15,8 @@ def lambda_handler(event, context):
     bucket = event['Records'][0]['s3']['bucket']['name']
     # get file/key name
     key = event['Records'][0]['s3']['object']['key']
+    # log bucket and key
+    logger.info(f'bucket: {bucket}, key: {key}')
     # get file object
     response = s3.get_object(Bucket=bucket, Key=key)
     # read file content

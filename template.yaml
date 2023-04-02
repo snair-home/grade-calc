@@ -12,6 +12,8 @@ Globals:
     MemorySize: 128
 
 Resources:
+  GradeCalcDLQ:
+    Type: AWS::SNS::Topic
   GradeCalcTopic:
     # create topic of type sns
     Type: AWS::SNS::Topic
@@ -26,6 +28,9 @@ Resources:
       CodeUri: grade_calc/
       Handler: grade_calc.lambda_handler
       Runtime: python3.9
+      DeadLetterQueue: 
+        Type: SNS
+        TargetArn: !Ref GradeCalcDLQ
       Architectures:
         - x86_64
       Policies:
@@ -57,6 +62,19 @@ Resources:
           Type: SNS
           Properties:
             Topic: !Ref GradeCalcTopic
+  ErrorHandlerFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: grade_calc/
+      Handler: error_handler.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref GradeCalcDLQ
 
 
 
