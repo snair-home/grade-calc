@@ -12,6 +12,8 @@ Globals:
     MemorySize: 128
 
 Resources:
+  GradeCalcQueue:
+    Type: AWS::SQS::Queue
   GradeCalcDLQ:
     Type: AWS::SNS::Topic
   GradeCalcTopic:
@@ -62,6 +64,21 @@ Resources:
           Type: SNS
           Properties:
             Topic: !Ref GradeCalcTopic
+  GradeLoopFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: grade_calc/
+      Handler: grade_report_sqs.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt GradeCalcQueue.Arn
+            BatchSize: 5
+            
   ErrorHandlerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -75,6 +92,7 @@ Resources:
           Type: SNS
           Properties:
             Topic: !Ref GradeCalcDLQ
+
 
 
 
